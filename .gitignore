@@ -1,0 +1,11 @@
+# Biological sequence reads (FASTQ format)
+data/*.fastq
+
+# Intermediate and output directories
+qc/
+quants/
+reference/salmon_index/
+
+# Local reports (Word documents)
+rnaseq_pipeline_report.docx
+*.docx
