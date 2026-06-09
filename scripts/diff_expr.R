@@ -85,6 +85,9 @@ cat("Saved differential expression results to:", output_csv, "\n")
 cat("Generating Volcano Plot...\n")
 res_df$gene <- rownames(res_df)
 
+# Prevent Inf values on Y-axis by capping p-value at 1e-250
+res_df$pvalue[res_df$pvalue == 0] <- 1e-250
+
 # Define significance thresholds
 padj_cutoff <- 0.05
 lfc_cutoff <- 1.0
@@ -97,22 +100,28 @@ res_df$Significance <- factor(res_df$Significance, levels = c("Not Significant",
 
 # Plot
 volcano_plot <- ggplot(res_df, aes(x = log2FoldChange, y = -log10(pvalue), color = Significance)) +
-  geom_point(alpha = 0.8, size = 2) +
+  geom_point(alpha = 0.8, size = 2.5) +
   scale_color_manual(values = c("Not Significant" = "grey60", "Upregulated" = "firebrick3", "Downregulated" = "dodgerblue3")) +
-  theme_minimal(base_size = 14) +
+  theme_bw(base_size = 14) +
+  theme(
+    panel.background = element_rect(fill = "white", color = "black"),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.grid.major = element_line(color = "grey90", linewidth = 0.5),
+    panel.grid.minor = element_blank(),
+    legend.position = "right",
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  ) +
   geom_vline(xintercept = c(-lfc_cutoff, lfc_cutoff), linetype = "dashed", color = "grey40") +
   geom_hline(yintercept = -log10(padj_cutoff), linetype = "dashed", color = "grey40") +
   labs(title = "Volcano Plot: Treated vs. Control",
        x = "Log2 Fold Change",
-       y = "-Log10 P-value") +
-  theme(legend.position = "right",
-        plot.title = element_text(hjust = 0.5, face = "bold"))
+       y = "-Log10 P-value")
 
 # Label the top differentially expressed genes
 top_genes <- head(res_df[res_df$Significance != "Not Significant", ], 6)
 if (nrow(top_genes) > 0) {
   volcano_plot <- volcano_plot +
-    geom_text(data = top_genes, aes(label = gene), vjust = -0.5, hjust = 0.5, color = "black", size = 3.5, fontface = "bold")
+    geom_text(data = top_genes, aes(label = gene), vjust = -0.6, hjust = 0.5, color = "black", size = 3.5, fontface = "bold", show.legend = FALSE)
 }
 
 # Save plot to PNG
